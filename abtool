@@ -1,0 +1,118 @@
+#! /bin/bash
+#
+# abtool
+# Copyright (C) 2013 Adrian Perez <aperez@igalia.com>
+#
+# Distributed under terms of the MIT license.
+#
+set -e
+
+
+#
+# cmd_help topic
+#
+cmd_help ()
+{
+	case ${1:-commands} in
+		commands)
+			cat <<-EOF
+			Usage: $0 command [command arguments]
+
+			Available commands:
+
+			  unpack  Unpack an ADB backup to a directory.
+			  pack    Pack a directory to an ADB backup.
+			  help    Display usage information for commands.
+
+			EOF
+			;;
+		unpack)
+			cat <<-EOF
+			Usage: $0 unpack file [path]
+
+			Unpacks an ADB backup file to a directory tree.
+
+			Arguments:
+
+			  file   ADB backup file, obtained with 'adb backup'
+			  path   Directory where to extract the backup contents. It will be
+			         automatically created if it does not exist. If not given,
+			         the current directory will be used for output.
+
+			EOF
+			;;
+		pack)
+			cat <<-EOF
+			Usage: $0 pack file [path]
+
+			Packs a directory tree to an ADB backup file.
+
+			Arguments:
+
+			  file   ADB backup file resulting from the packing.
+			  path   Directory containing the input files. If not given, the
+			         current directory will be used as input.
+			EOF
+			;;
+		help)
+			cat <<-EOF
+			Usage: $0 help [topic]
+
+			Options:
+
+			  topic  Command name or topic (use 'help topics' for a list)
+
+			EOF
+			;;
+		*)
+			cat 1>&2 <<-EOF
+			$0: help: No such topic '$1'
+			EOF
+			exit 1
+			;;
+	esac
+}
+
+#
+# cmd_unpack backup.ab [dest_path]
+#
+cmd_unpack ()
+{
+	if [[ $# -lt 1 ]] ; then
+		echo "$0: unpack: Invalid command line." 1>&2
+		exit 1
+	fi
+
+	local tar_opts=( )
+	if [[ $# -eq 2 ]] ; then
+		mkdir -p "$2"
+		tar_opts=( -C "$2" )
+	fi
+
+	dd if="$1" bs=1 skip=24 | openssl zlib -d | tar -xf - "${tar_opts[@]}"
+}
+
+#
+# cmd_pack
+#
+
+if [[ $# -eq 0 ]] ; then
+	cmd=help
+else
+	cmd=$1
+	shift
+fi
+
+case ${cmd} in
+	pack | unpack | help)
+		cmd_${cmd} "$@"
+		;;
+	*)
+		cat 1>&2 <<-EOF
+		$0: No such command '${cmd}'
+		Use '$0 help' to get a list of available commands
+		EOF
+		exit 1
+		;;
+esac
+
