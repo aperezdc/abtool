@@ -98,7 +98,7 @@ cmd_unpack ()
 	fi
 
 	local tar_opts=( )
-	if [[ $# -eq 2 ]] ; then
+	if [[ $# -gt 1 ]] ; then
 		mkdir -p "$2"
 		tar_opts=( -C "$2" )
 	fi
@@ -117,9 +117,33 @@ cmd_list ()
 	tail -n +5 "$1" | openssl zlib -d | tar -tf -
 }
 
+
+declare -r HEADER=$'ANDROID BACKUP\n1\n1\nnone\n'
+
 #
 # cmd_pack
 #
+cmd_pack ()
+{
+	if [[ $# -lt 1 ]] ; then
+		echo "$0: pack: Invalid command line." 1>&2
+		exit 1
+	fi
+
+	local dir='.'
+	if [[ $# -gt 1 ]] ; then
+		if [[ ! -d $2 ]] ; then
+			echo "$0: pack: Directory '$2' does not exist." 1>&2
+			exit 1
+		fi
+		dir=$2
+	fi
+	( cd "${dir}"
+	  echo "$HEADER"
+	  tar -cf - . | openssl zlib -e
+	) > "$1"
+}
+
 
 if [[ $# -eq 0 ]] ; then
 	cmd=help
