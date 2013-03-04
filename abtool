@@ -22,6 +22,7 @@ cmd_help ()
 
 			  unpack  Unpack an ADB backup to a directory.
 			  pack    Pack a directory to an ADB backup.
+			  list    Lists contents of an ADB backup.
 			  help    Display usage information for commands.
 
 			EOF
@@ -52,6 +53,19 @@ cmd_help ()
 			  file   ADB backup file resulting from the packing.
 			  path   Directory containing the input files. If not given, the
 			         current directory will be used as input.
+
+			EOF
+			;;
+		list)
+			cat <<-EOF
+			Usage: $0 list file
+
+			Lists the contents of an ADB backup file.
+
+			Arguments:
+
+			  file   ADB backup file resulting from the packing.
+
 			EOF
 			;;
 		help)
@@ -93,6 +107,19 @@ cmd_unpack ()
 }
 
 #
+# cmd_list backup.ab
+#
+cmd_list ()
+{
+	if [[ $# -lt 1 ]] ; then
+		echo "$0: list: Invalid command line." 1>&2
+		exit 1
+	fi
+
+	dd if="$1" bs=1 skip=24 | openssl zlib -d | tar -tf -
+}
+
+#
 # cmd_pack
 #
 
@@ -104,7 +131,7 @@ else
 fi
 
 case ${cmd} in
-	pack | unpack | help)
+	pack | unpack | list | help)
 		cmd_${cmd} "$@"
 		;;
 	*)
