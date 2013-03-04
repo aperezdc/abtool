@@ -102,8 +102,7 @@ cmd_unpack ()
 		mkdir -p "$2"
 		tar_opts=( -C "$2" )
 	fi
-
-	dd if="$1" bs=1 skip=24 | openssl zlib -d | tar -xf - "${tar_opts[@]}"
+	tail -n +5 "$1" | openssl zlib -d | tar -xf - "${tar_opts[@]}"
 }
 
 #
@@ -115,8 +114,7 @@ cmd_list ()
 		echo "$0: list: Invalid command line." 1>&2
 		exit 1
 	fi
-
-	dd if="$1" bs=1 skip=24 | openssl zlib -d | tar -tf -
+	tail -n +5 "$1" | openssl zlib -d | tar -tf -
 }
 
 #
